@@ -32,8 +32,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           add-job-summary: never
+
+      - name: Restore Gradle Build Cache
+        uses: buildpulse/cache@v4
+        with:
+          path: /home/runner/.gradle
+          key: ${{ runner.os }}-avro-gradle-${{ hashFiles('**/*.gradle*', '**/settings.gradle*', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', '**/gradle.lockfile') }}
+
       - name: Run Avro Compatibility Tests
-        run: ./gradlew -DmaxParallelForks=2 --parallel :internal:venice-avro-compatibility-test:test --continue
+        run: ./gradlew -DmaxParallelForks=2 --parallel :internal:venice-avro-compatibility-test:test --continue --build-cache
       - name: Package Build Artifacts
         if: success() || failure()
         shell: bash
@@ -76,8 +83,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           add-job-summary: never
+
+      - name: Restore Gradle Build Cache
+        uses: buildpulse/cache@v4
+        with:
+          path: /home/runner/.gradle
+          key: ${{ runner.os }}-duck-gradle-${{ hashFiles('**/*.gradle*', '**/settings.gradle*', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', '**/gradle.lockfile') }}
+
       - name: Run DuckDB Integration Tests
-        run: ./gradlew -DforkEvery=1 -DmaxParallelForks=1 :integrations:venice-duckdb:integrationTest --continue
+        run: ./gradlew -DforkEvery=1 -DmaxParallelForks=1 :integrations:venice-duckdb:integrationTest --continue --build-cache
       - name: Package Build Artifacts
         if: success() || failure()
         shell: bash
@@ -120,8 +134,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           add-job-summary: never
+
+      - name: Restore Gradle Build Cache
+        uses: buildpulse/cache@v4
+        with:
+          path: /home/runner/.gradle
+          key: ${{ runner.os }}-pulsar-gradle-${{ hashFiles('**/*.gradle*', '**/settings.gradle*', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', '**/gradle.lockfile') }}
+
       - name: Build with gradle
-        run: ./gradlew assemble --continue --no-daemon -DforkEvery=1 -DmaxParallelForks=1
+        run: ./gradlew assemble --continue --no-daemon -DforkEvery=1 -DmaxParallelForks=1 --build-cache
+
+      - name: Setup Docker
+        uses: buildpulse/setup-buildx-action@v3
 
       - name: Build docker images for Venice (latest-dev tag)
         shell: bash
@@ -134,7 +158,7 @@ jobs:
         shell: bash
         run: |
           cd ${{ github.workspace }}/tests/docker-images/pulsar-sink
-          docker build --tag=pulsar/venice-test:latest-dev ${{ github.workspace }} -f ./Dockerfile
+          docker buildx build --load --tag=pulsar/venice-test:latest-dev ${{ github.workspace }} --cache-from "type=registry,ref=${BP_DOCKER_REGISTRY}/pulsar/venice-test:build" --cache-to "type=registry,ref=${BP_DOCKER_REGISTRY}/pulsar/venice-test:build" -f ./Dockerfile
           cd ${{ github.workspace }}
 
       - name: Run the test

@@ -45,8 +45,10 @@ for target in ${targets[@]}; do
         --label "org.opencontainers.image.authors=VeniceDB" \
         --label "org.opencontainers.image.description=${image_descriptions[$target]}" \
         --label "org.opencontainers.image.licenses=BSD-2-Clause" \
+        --cache-from "type=registry,ref=${BP_DOCKER_REGISTRY}/$repository/$target:build" \
+        --cache-to "type=registry,ref=${BP_DOCKER_REGISTRY}/$repository/$target:build" \
         -t "$repository/$target:$version" -t "$repository/$target:latest-dev" $target
-    docker buildx build --load --platform linux/amd64 -t "$repository/$target:$version" -t "$repository/$target:latest-dev" $target
+    docker buildx build --load --platform linux/amd64 -t "$repository/$target:$version" -t "$repository/$target:latest-dev" --cache-from "type=registry,ref=${BP_DOCKER_REGISTRY}/$repository/$target:build" --cache-to "type=registry,ref=${BP_DOCKER_REGISTRY}/$repository/$target:build" $target
 done
 
 rm -f venice-client/venice-push-job-all.jar
