@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         jdk: [ 8, 11, 17 ]
-    runs-on: ubuntu-latest
+    runs-on: bp-ubuntu-latest-x64-4x
     timeout-minutes: 60
     permissions:
       contents: read
